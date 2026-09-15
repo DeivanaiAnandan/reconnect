@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import app from "../firebase";
 
 const auth = getAuth(app);
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check whether this page is opened for editing an existing user
+  const isEditMode = location.state?.mode === "edit";
+
+  // Data passed from Login.jsx for a new Google user
+  const firebaseUid = location.state?.firebaseUid;
+  const googleName = location.state?.name;
+  const googleEmail = location.state?.email;
+
+  console.log("CompleteProfile location.state:", location.state);
+  console.log("CompleteProfile isEditMode:", isEditMode);
 
   const [profile, setProfile] = useState(null);
   const [regions, setRegions] = useState([]);
@@ -16,6 +28,8 @@ const CompleteProfile = () => {
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
+    name: "",
+    email: "",
     age: "",
     gender: "",
     phone: "",
@@ -26,6 +40,7 @@ const CompleteProfile = () => {
     skills: [],
   });
 
+  // Load regions for the registration form
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -38,35 +53,62 @@ const CompleteProfile = () => {
 
         const token = await currentUser.getIdToken();
 
-        // Get current profile
-        const profileResponse = await fetch(
-          "http://localhost:5000/api/users/me",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
+        // Edit mode → get existing profile from backend
+        if (isEditMode) {
+          console.log("Edit mode: loading existing profile");
+
+          const profileResponse = await fetch(
+            "http://localhost:5000/api/users/me",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             },
-          },
-        );
+          );
 
-        const profileData = await profileResponse.json();
+          const profileData = await profileResponse.json();
 
-        if (!profileResponse.ok) {
-          throw new Error(profileData.message || "Failed to fetch profile");
+          console.log("Existing profile:", profileData);
+
+          if (!profileResponse.ok) {
+            throw new Error(profileData.message || "Failed to fetch profile");
+          }
+
+          setProfile(profileData.profile);
+
+          setFormData({
+            age: profileData.profile.age || "",
+            gender: profileData.profile.gender || "",
+            phone: profileData.profile.phone || "",
+            localLanguage: profileData.profile.localLanguage || "",
+            region: profileData.profile.region || "",
+            stateProvince: profileData.profile.stateProvince || "",
+            country: profileData.profile.country || "",
+            skills: profileData.profile.skills || [],
+          });
         }
 
-        setProfile(profileData.profile);
+        // New user → require information from Login.jsx
+        else {
+          console.log("New user mode");
 
-        // Populate existing fields, if any
-        setFormData({
-          age: profileData.profile.age || "",
-          gender: profileData.profile.gender || "",
-          phone: profileData.profile.phone || "",
-          localLanguage: profileData.profile.localLanguage || "",
-          region: profileData.profile.region || "",
-          stateProvince: profileData.profile.stateProvince || "",
-          country: profileData.profile.country || "",
-          skills: profileData.profile.skills || [],
-        });
+          if (!firebaseUid || !googleEmail) {
+            setError("User information is missing. Please login again.");
+            return;
+          }
+
+          setProfile({
+            name: googleName,
+            email: googleEmail,
+          });
+        }
+
+        if (!currentUser) {
+          setError("Please login first.");
+          return;
+        }
+
+        // const token = await currentUser.getIdToken();
 
         // Get regions
         const regionResponse = await fetch(
@@ -86,7 +128,7 @@ const CompleteProfile = () => {
 
         setRegions(regionData);
       } catch (error) {
-        console.error("Error loading profile:", error);
+        console.error("Error loading registration data:", error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -94,7 +136,7 @@ const CompleteProfile = () => {
     };
 
     fetchData();
-  }, []);
+  }, [firebaseUid, googleName, googleEmail]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -152,36 +194,78 @@ const CompleteProfile = () => {
 
       const token = await currentUser.getIdToken();
 
-      const response = await fetch("http://localhost:5000/api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          age: formData.age,
-          gender: formData.gender,
-          phone: formData.phone,
-          localLanguage: formData.localLanguage,
-          region: formData.region,
-          stateProvince: formData.stateProvince,
-          country: formData.country,
-          skills: formData.skills,
-        }),
-      });
+      let response;
+
+      if (isEditMode) {
+        // ----------------------------------------------
+        // EDIT MODE → UPDATE EXISTING USER
+        // ----------------------------------------------
+
+        console.log("Updating existing user");
+
+        response = await fetch("http://localhost:5000/api/users/me", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: profile?.name,
+            age: formData.age,
+            gender: formData.gender,
+            phone: formData.phone,
+            localLanguage: formData.localLanguage,
+            region: formData.region,
+            stateProvince: formData.stateProvince,
+            country: formData.country,
+            email: profile?.email,
+            skills: formData.skills,
+          }),
+        });
+      } else {
+        // ----------------------------------------------
+        // NEW USER → CREATE USER
+        // ----------------------------------------------
+
+        console.log("Creating new user");
+
+        response = await fetch("http://localhost:5000/api/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: googleName,
+            age: formData.age,
+            gender: formData.gender,
+            phone: formData.phone,
+            localLanguage: formData.localLanguage,
+            region: formData.region,
+            stateProvince: formData.stateProvince,
+            country: formData.country,
+            email: googleEmail,
+            skills: formData.skills,
+            firebaseUid: firebaseUid,
+          }),
+        });
+      }
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update profile");
+        throw new Error(data.message || "Failed to create profile");
       }
 
-      console.log("Profile updated:", data);
+      console.log(isEditMode ? "Profile updated:" : "User created:", data);
 
-      // Profile is now complete
-      navigate("/assistance-request");
+      if (isEditMode) {
+        navigate("/user-dashboard");
+      } else {
+        navigate("/assistance-request");
+      }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error creating profile:", error);
       setError(error.message);
     } finally {
       setSubmitting(false);
@@ -191,7 +275,7 @@ const CompleteProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 p-10">
-        <p>Loading your profile...</p>
+        <p>Loading registration form...</p>
       </div>
     );
   }
@@ -305,6 +389,7 @@ const CompleteProfile = () => {
             <label className="mb-2 block font-medium">Region</label>
 
             <select
+              name="region"
               value={formData.region}
               onChange={handleRegionChange}
               required
@@ -326,6 +411,7 @@ const CompleteProfile = () => {
 
             <input
               type="text"
+              name="stateProvince"
               value={formData.stateProvince}
               readOnly
               className="w-full rounded-lg border bg-slate-100 px-4 py-3"
@@ -338,6 +424,7 @@ const CompleteProfile = () => {
 
             <input
               type="text"
+              name="country"
               value={formData.country}
               readOnly
               className="w-full rounded-lg border bg-slate-100 px-4 py-3"

@@ -538,7 +538,7 @@ const SuperAdminDashboard = () => {
                       <th className="px-4 py-3">Email</th>
                       <th className="px-4 py-3">Phone</th>
                       <th className="px-4 py-3">Local Language</th>
-                      <th className="px-4 py-3">Region ID</th>
+                      <th className="px-4 py-3">Region</th>
                       <th className="px-4 py-3">Status</th>
                     </tr>
                   </thead>
@@ -554,7 +554,7 @@ const SuperAdminDashboard = () => {
 
                         <td className="px-4 py-3">{ngo.localLanguage}</td>
 
-                        <td className="px-4 py-3">{ngo.regionId}</td>
+                        <td className="px-4 py-3">{ngo.regionId?.region}</td>
 
                         <td className="px-4 py-3">{ngo.accountStatus}</td>
                       </tr>

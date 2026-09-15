@@ -34,20 +34,42 @@ const Login = () => {
         },
       });
 
+      // Step 4: Read backend response
+      console.log("Response status:", response.status);
+
+      // Step 5: New user
+      if (response.status === 404) {
+        console.log("New Firebase user - no MongoDB profile found");
+
+        navigate("/complete-profile", {
+          state: {
+            firebaseUid: result.user.uid,
+            name: result.user.displayName,
+            email: result.user.email,
+          },
+        });
+
+        return;
+      }
+      // Step 6: Read backend response for existing user
+
       const data = await response.json();
+      console.log("Backend response:", data);
 
-      console.log("Backend profile:", data);
-
-      // Step 4: Handle backend error
+      // Step 6: Handle other backend errors
       if (!response.ok) {
         throw new Error(data.message || "Failed to get user profile");
       }
 
-      // Step 5: Navigate based on role
+      // Step 7: Existing user
+      console.log("Existing ReConnect user:", data);
+
+      // Step 8: Navigate based on role
       if (data.role === "user") {
         console.log("Logged in as User");
 
         if (data.profileComplete) {
+          console.log("Navigating to user dashboard");
           navigate("/user-dashboard");
         } else {
           navigate("/complete-profile");

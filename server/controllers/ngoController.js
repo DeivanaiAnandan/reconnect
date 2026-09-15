@@ -130,12 +130,13 @@ const getNGOs = asyncHandler(async (req, res) => {
 
     const ngos = await NGO.find({
       regionId: regionDoc._id,
-    });
+    }).populate("regionId");
 
     return res.status(200).json(ngos);
   }
 
-  const ngos = await NGO.find();
+  // const ngos = await NGO.find();
+  const ngos = await NGO.find().populate("regionId");
 
   res.status(200).json(ngos);
 });

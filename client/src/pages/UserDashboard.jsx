@@ -64,7 +64,11 @@ const UserDashboard = () => {
     );
   }
   const handleEditProfile = () => {
-    navigate("/complete-profile");
+    navigate("/complete-profile", {
+      state: {
+        mode: "edit",
+      },
+    });
   };
 
   const handleDeactivateAccount = async () => {
