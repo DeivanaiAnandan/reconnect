@@ -5,49 +5,7 @@ import User from "../models/userModel.js";
 // @desc    Onboard a new NGO
 // @route   POST /api/ngos
 // @access  Private/Super Admin
-// const createNGO = asyncHandler(async (req, res) => {
-//   const {
-//     name,
-//     email,
-//     phone,
-//     localLanguage,
-//     region,
-//     stateProvince,
-//     country,
-//     firebaseUid,
-//   } = req.body;
 
-//   const ngoExists = await NGO.findOne({ email });
-
-//   if (ngoExists) {
-//     res.status(400);
-//     throw new Error("NGO already exists");
-//   }
-
-//   const regionDoc = await Region.findOne({
-//     region,
-//     stateProvince,
-//     country,
-//   });
-//   console.log("regionDoc =", regionDoc);
-//   if (!regionDoc) {
-//     res.status(404);
-//     throw new Error("Region not found");
-//   }
-
-//   const ngo = await NGO.create({
-//     name,
-//     email,
-//     phone,
-//     localLanguage,
-//     regionId: regionDoc._id,
-//     firebaseUid,
-//     role: "ngo",
-//     accountStatus: "active",
-//   });
-
-//   res.status(201).json(ngo);
-// });
 const createNGO = asyncHandler(async (req, res) => {
   const {
     name,
@@ -140,7 +98,9 @@ const getNGOs = asyncHandler(async (req, res) => {
 
   res.status(200).json(ngos);
 });
-
+// @desc    Get NGO by ID
+// @route   GET /api/ngos/:id
+// @access  Private/Super Admin
 const getNGOById = async (req, res) => {
   try {
     const ngo = await NGO.findById(req.params.id).populate("regionId");
@@ -159,6 +119,9 @@ const getNGOById = async (req, res) => {
     });
   }
 };
+// @desc Update NGO
+// @route PUT /api/ngos/:id
+// @access Private/Super Admin
 const updateNGO = async (req, res) => {
   try {
     const { name, email, phone, regionId } = req.body;

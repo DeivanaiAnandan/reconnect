@@ -16,22 +16,24 @@ const UserDashboard = () => {
     const fetchProfile = async () => {
       try {
         const currentUser = auth.currentUser;
+        console.log("Current User", currentUser);
 
         if (!currentUser) {
           setError("Please login first.");
           return;
         }
-
+        debugger;
         const token = await currentUser.getIdToken();
-
+        console.log("user token", token);
+        debugger;
         const response = await fetch("http://localhost:5000/api/users/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
+        debugger;
         const data = await response.json();
-
+        console.log("data", data);
         if (!response.ok) {
           throw new Error(data.message || "Failed to fetch profile");
         }

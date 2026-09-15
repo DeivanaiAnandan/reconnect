@@ -108,8 +108,7 @@ const CompleteProfile = () => {
           return;
         }
 
-        // const token = await currentUser.getIdToken();
-
+        
         // Get regions
         const regionResponse = await fetch(
           "http://localhost:5000/api/regions",

@@ -18,7 +18,7 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 
   const decodedToken = await admin.auth().verifyIdToken(token);
-
+console.log("decodedtoken", decodedToken)
   req.firebaseUser = decodedToken;
 
   const user = await User.findOne({
