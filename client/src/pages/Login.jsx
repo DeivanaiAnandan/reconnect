@@ -24,9 +24,12 @@ const Login = () => {
     try {
       setError("");
 
+      console.log("========== GOOGLE LOGIN START ==========");
+
       const provider = new GoogleAuthProvider();
 
       // Step 1: Login with Google
+      console.log("Step 1: Starting Google Sign-In...");
 
       const result = await signInWithPopup(auth, provider);
 
