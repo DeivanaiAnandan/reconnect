@@ -5,7 +5,9 @@ import { connectDB } from "./config/db.js";
 import regionRoutes from "./routes/regionRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import ngoRoutes from "./routes/ngoRoutes.js";
+
 import cors from "cors";
+import assistanceRequestRoutes from "./routes/assistanceRequestRoutes.js";
 
 dotenv.config();
 // console.log("MONGO_URI:", process.env.MONGO_URI);
@@ -28,6 +30,7 @@ app.use(express.json());
 app.use("/api/regions", regionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ngos", ngoRoutes);
+app.use("/api/assistance-requests", assistanceRequestRoutes);
 // app.get("/", (req, res) => {
 //   res.send("Reconnect is running");
 // });

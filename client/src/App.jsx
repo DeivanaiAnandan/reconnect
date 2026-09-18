@@ -15,7 +15,7 @@
 // export default App;
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+// import { LanguageProvider } from "./context/LanguageContext";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 

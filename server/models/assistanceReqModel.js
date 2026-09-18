@@ -24,7 +24,7 @@ const assistanceRequestSchema = new mongoose.Schema(
       trim: true,
     },
 
-      status: {
+    status: {
       type: String,
       enum: ["Pending", "In Progress", "Resolved"],
       default: "Pending",
@@ -32,12 +32,12 @@ const assistanceRequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const AssistanceRequest = mongoose.model(
   "AssistanceRequest",
-  assistanceRequestSchema
+  assistanceRequestSchema,
 );
 
 export default AssistanceRequest;
