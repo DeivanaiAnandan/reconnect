@@ -38,11 +38,14 @@ const Login = () => {
       console.log("Firebase ID Token:", token);
 
       // Step 3: Send token to backend
-      const response = await fetch("http://localhost:5000/api/users/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       // Step 4: Read backend response
       console.log("Response status:", response.status);

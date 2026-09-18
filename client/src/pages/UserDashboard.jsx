@@ -38,7 +38,7 @@ const UserDashboard = () => {
 
         // Fetch profile
         const profileResponse = await fetch(
-          "http://localhost:5000/api/users/me",
+          `${import.meta.env.VITE_API_URL}/api/users/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ const UserDashboard = () => {
 
         // Fetch assistance requests
         const requestResponse = await fetch(
-          "http://localhost:5000/api/assistance-requests/my",
+          `${import.meta.env.VITE_API_URL}/api/assistance-requests/my`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -110,7 +110,7 @@ const UserDashboard = () => {
       const token = await currentUser.getIdToken();
 
       const response = await fetch(
-        "http://localhost:5000/api/users/me/deactivate",
+        `${import.meta.env.VITE_API_URL}/api/users/me/deactivate`,
         {
           method: "PATCH",
           headers: {

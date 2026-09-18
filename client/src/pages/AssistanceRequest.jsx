@@ -79,7 +79,7 @@ const AssistanceRequest = () => {
       console.log("Assistance request:", formData);
 
       const response = await fetch(
-        "http://localhost:5000/api/assistance-requests",
+        `${import.meta.env.VITE_API_URL}/api/assistance-requests`,
         {
           method: "POST",
           headers: {

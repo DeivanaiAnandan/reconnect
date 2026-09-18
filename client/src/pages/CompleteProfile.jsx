@@ -64,7 +64,7 @@ const CompleteProfile = () => {
           console.log("Edit mode: loading existing profile");
 
           const profileResponse = await fetch(
-            "http://localhost:5000/api/users/me",
+            `${import.meta.env.VITE_API_URL}/api/users/me`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -119,7 +119,7 @@ const CompleteProfile = () => {
         }
 
         const regionResponse = await fetch(
-          "http://localhost:5000/api/regions",
+          `${import.meta.env.VITE_API_URL}/api/users/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -207,7 +207,7 @@ const CompleteProfile = () => {
       if (isEditMode) {
         console.log("Updating existing user");
 
-        response = await fetch("http://localhost:5000/api/users/me", {
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -229,7 +229,7 @@ const CompleteProfile = () => {
       } else {
         console.log("Creating new user");
 
-        response = await fetch("http://localhost:5000/api/users", {
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

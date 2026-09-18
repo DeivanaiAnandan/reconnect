@@ -129,11 +129,14 @@ const SuperAdminDashboard = () => {
 
         const token = await currentUser.getIdToken();
 
-        const response = await fetch("http://localhost:5000/api/regions", {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/regions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         const data = await response.json();
 
@@ -171,15 +174,15 @@ const SuperAdminDashboard = () => {
 
         const [usersResponse, ngosResponse, requestsResponse] =
           await Promise.all([
-            fetch("http://localhost:5000/api/users", {
+            fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
               headers,
             }),
 
-            fetch("http://localhost:5000/api/ngos", {
+            fetch(`${import.meta.env.VITE_API_URL}/api/ngos`, {
               headers,
             }),
 
-            fetch("http://localhost:5000/api/assistance-requests", {
+            fetch(`${import.meta.env.VITE_API_URL}/api/assistance-requests`, {
               headers,
             }),
           ]);
@@ -252,11 +255,14 @@ const SuperAdminDashboard = () => {
 
       const token = await currentUser.getIdToken();
 
-      const response = await fetch("http://localhost:5000/api/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -289,7 +295,7 @@ const SuperAdminDashboard = () => {
 
       const token = await currentUser.getIdToken();
 
-      const response = await fetch("http://localhost:5000/api/ngos", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ngos`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -329,7 +335,7 @@ const SuperAdminDashboard = () => {
       const token = await currentUser.getIdToken();
 
       const response = await fetch(
-        "http://localhost:5000/api/assistance-requests",
+        `${import.meta.env.VITE_API_URL}/api/assistance-requests`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -362,7 +368,7 @@ const SuperAdminDashboard = () => {
       const token = await currentUser.getIdToken();
 
       const response = await fetch(
-        `http://localhost:5000/api/assistance-requests/${requestId}/status`,
+        `${import.meta.env.VITE_API_URL}/api/assistance-requests/${requestId}/status`,
         {
           method: "PATCH",
           headers: {
@@ -459,7 +465,7 @@ const SuperAdminDashboard = () => {
 
       const token = await currentUser.getIdToken();
 
-      const response = await fetch("http://localhost:5000/api/ngos", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ngos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -508,7 +514,7 @@ const SuperAdminDashboard = () => {
       const action = ngo.accountStatus === "active" ? "deactivate" : "activate";
 
       const response = await fetch(
-        `http://localhost:5000/api/ngos/${ngo._id}/${action}`,
+        `${import.meta.env.VITE_API_URL}/api/ngos/${ngo._id}/${action}`,
         {
           method: "PATCH",
           headers: {
@@ -542,7 +548,7 @@ const SuperAdminDashboard = () => {
       const token = await currentUser.getIdToken();
 
       const response = await fetch(
-        `http://localhost:5000/api/ngos/${ngo._id}`,
+        `${import.meta.env.VITE_API_URL}/api/ngos/${ngo._id}`,
         {
           method: "DELETE",
           headers: {

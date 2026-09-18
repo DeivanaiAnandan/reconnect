@@ -32,9 +32,12 @@ const NGODashboard = () => {
         };
 
         // Fetch logged-in NGO profile
-        const ngoResponse = await fetch("http://localhost:5000/api/ngos/me", {
-          headers,
-        });
+        const ngoResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/ngos/me`,
+          {
+            headers,
+          },
+        );
 
         const ngoData = await ngoResponse.json();
 
@@ -46,7 +49,7 @@ const NGODashboard = () => {
 
         // Fetch users in NGO's assigned region
         const usersResponse = await fetch(
-          "http://localhost:5000/api/ngos/users",
+          `${import.meta.env.VITE_API_URL}/api/ngos/users`,
           {
             headers,
           },
@@ -62,7 +65,7 @@ const NGODashboard = () => {
 
         // Fetch assistance requests in NGO's assigned region
         const requestsResponse = await fetch(
-          "http://localhost:5000/api/ngos/assistance-requests",
+          `${import.meta.env.VITE_API_URL}/api/ngos/assistance-requests`,
           {
             headers,
           },
