@@ -42,8 +42,10 @@ const SuperAdminDashboard = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+
   const [deleteNGO, setDeleteNGO] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -69,6 +71,7 @@ const SuperAdminDashboard = () => {
   const resolvedRequests = assistanceRequests.filter(
     (request) => request.status === "Resolved",
   ).length;
+
   //Status Chart
   const requestStatusData = [
     {
@@ -153,6 +156,7 @@ const SuperAdminDashboard = () => {
 
     fetchRegions();
   }, []);
+
   // Dashboard data while login
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -220,15 +224,7 @@ const SuperAdminDashboard = () => {
 
     fetchDashboardData();
   }, []);
-  //Fetch Users
-  // useEffect(() => {
-  //   if (activeSection === "users" && showUsers && usersSectionRef.current) {
-  //     usersSectionRef.current.scrollIntoView({
-  //       behavior: "smooth",
-  //       block: "start",
-  //     });
-  //   }
-  // }, [activeSection, showUsers]);
+
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
