@@ -22,30 +22,52 @@ const Login = () => {
 
   const loginWithGoogle = async () => {
     try {
+      // throw new Error("TEST LOGIN ERROR");
       setError("");
 
       const provider = new GoogleAuthProvider();
 
+      // throw new Error("TEST: Google Sign-In failed");
       // Step 1: Login with Google
-      const result = await signInWithPopup(auth, provider);
-
-      console.log("Firebase UID:", result.user.uid);
-      console.log("Email:", result.user.email);
+      let result;
+      try {
+        result = await signInWithPopup(auth, provider);
+        console.log("Firebase UID:", result.user.uid);
+        console.log("Email:", result.user.email);
+      } catch (error) {
+        console.error("Step 1 ERROR: Google Sign-In failed:", error);
+        throw new Error("Unable to sign in with Google. Please try again.");
+      }
 
       // Step 2: Get Firebase ID token
-      const token = await result.user.getIdToken();
+      let token;
+      try {
+        // throw new Error("TEST: Firebase token could not be obtained");
+        token = await result.user.getIdToken();
+      } catch (error) {
+        console.error("Step 2 ERROR: Unable to get Firebase token:", error);
+        throw new Error(
+          "Unable to authenticate your account. Please try again.",
+        );
+      }
 
-      console.log("Firebase ID Token:", token);
-
+      // console.log("Firebase ID Token:", token);
+      console.log("Calling /api/users/me...");
       // Step 3: Send token to backend
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users/me`,
-        {
+      let response;
+      try {
+        response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
-      );
+        });
+      } catch (error) {
+        console.error("Step 3 ERROR: API request failed:", error);
+
+        throw new Error(
+          "Unable to connect to the server. Please check your connection and try again.",
+        );
+      }
 
       // Step 4: Read backend response
       console.log("Response status:", response.status);
@@ -64,15 +86,52 @@ const Login = () => {
 
         return;
       }
-
-      // Step 6: Read backend response for existing user
-      const data = await response.json();
-
-      console.log("Backend response:", data);
-
-      // Step 7: Handle other backend errors
+      // --------------------------------------------------
+      // STEP 5: Handle HTTP errors
+      // --------------------------------------------------
       if (!response.ok) {
-        throw new Error(data.message || "Failed to get user profile");
+        console.error(
+          "Step 5 ERROR: Backend returned:",
+          response.status,
+          response.statusText,
+        );
+
+        if (response.status === 401) {
+          throw new Error(
+            "Your session could not be verified. Please sign in again.",
+          );
+        }
+
+        if (response.status === 403) {
+          throw new Error(
+            "You do not have permission to access this application.",
+          );
+        }
+
+        if (response.status >= 500) {
+          throw new Error(
+            "The server is currently unavailable. Please try again later.",
+          );
+        }
+
+        throw new Error("Unable to retrieve your profile. Please try again.");
+      }
+      // Step 6: Read backend response for existing user
+      // --------------------------------------------------
+      // STEP 7: Parse JSON
+      // --------------------------------------------------
+      let data;
+
+      try {
+        data = await response.json();
+        // data.role = "testing";
+        console.log("Step 7 SUCCESS: Backend response:", data);
+      } catch (error) {
+        console.error("Step 7 ERROR: Invalid JSON response:", error);
+
+        throw new Error(
+          "The server returned invalid data. Please try again later.",
+        );
       }
 
       // Step 8: Existing user
@@ -92,7 +151,11 @@ const Login = () => {
       } else if (data.role === "superadmin") {
         navigate("/superadmin-dashboard");
       } else {
-        throw new Error("Unknown user role");
+        console.error("Unknown role received:", data.role);
+
+        throw new Error(
+          "Unable to identify your account. Please contact the administrator.",
+        );
       }
     } catch (error) {
       console.error("Google login error:", error);
@@ -148,21 +211,6 @@ const Login = () => {
             </CardHeader>
 
             <CardContent className="space-y-6 px-6 pb-8 sm:px-8">
-              {/* Error */}
-              {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-sm font-bold text-red-600">
-                      !
-                    </div>
-
-                    <p className="pt-1 text-sm font-medium leading-5 text-red-700">
-                      {error}
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Google Sign In */}
               <div>
                 <Button
@@ -177,7 +225,20 @@ const Login = () => {
                   Sign in securely using your Google account.
                 </p>
               </div>
+              {/* Error */}
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-sm font-bold text-red-600">
+                      !
+                    </div>
 
+                    <p className="pt-1 text-sm font-medium leading-5 text-red-700">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* NGO Information */}
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <div className="flex items-start gap-3">

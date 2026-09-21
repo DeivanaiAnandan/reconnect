@@ -27,26 +27,50 @@ const UserDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         const currentUser = auth.currentUser;
+        // const currentUser = null;
 
         if (!currentUser) {
           setError("Please login first.");
           setLoading(false);
           return;
         }
-
+        // throw new Error("TEST: Firebase token failed");
         const token = await currentUser.getIdToken();
 
         // Fetch profile
-        const profileResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+        let profileResponse;
 
-        const profileData = await profileResponse.json();
+        try {
+          profileResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/users/me`,
+            // `https://wrong-server-example-12345.com/api/users`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+        } catch (error) {
+          console.error("Step 3 ERROR: Profile API request failed:", error);
+
+          throw new Error(
+            "Unable to connect to the server while loading your profile.",
+          );
+        }
+
+        let profileData;
+
+        try {
+          // TEST: Force invalid JSON error
+          // throw new SyntaxError("TEST: Invalid profile JSON");
+          profileData = await profileResponse.json();
+        } catch (error) {
+          console.error("Step 4 ERROR: Invalid profile JSON:", error);
+
+          throw new Error(
+            "The server returned invalid profile data. Please try again later.",
+          );
+        }
 
         if (!profileResponse.ok) {
           throw new Error(profileData.message || "Failed to fetch profile");
@@ -55,22 +79,41 @@ const UserDashboard = () => {
         setProfile(profileData.profile);
 
         // Fetch assistance requests
-        const requestResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/assistance-requests/my`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
+        let requestResponse;
+
+        try {
+          requestResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/assistance-requests/my`,
+            // `https://wrong-server-example-12345.com/api/assistance-requests/my`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             },
-          },
-        );
-
-        const requestData = await requestResponse.json();
-
-        if (!requestResponse.ok) {
+          );
+        } catch (error) {
+          console.error(
+            "Step 4 ERROR: Assistance requests API request failed:",
+            error,
+          );
           throw new Error(
-            requestData.message || "Failed to fetch assistance requests",
+            "Unable to connect to the server while loading your assistance requests.",
           );
         }
+        if (!requestResponse.ok) {
+          let errorMessage = `Request failed with status ${requestResponse.status}`;
+
+          const contentType = requestResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await requestResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const requestData = await requestResponse.json();
 
         setAssistanceRequests(requestData.requests || []);
       } catch (error) {
@@ -111,6 +154,7 @@ const UserDashboard = () => {
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/users/me/deactivate`,
+        // `https://wrong-server-example-12345.com/api/users/me/deactivate`,
         {
           method: "PATCH",
           headers: {
@@ -119,11 +163,20 @@ const UserDashboard = () => {
         },
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to deactivate account");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       await auth.signOut();
       navigate("/login");
@@ -135,6 +188,7 @@ const UserDashboard = () => {
 
   const handleLogout = async () => {
     try {
+      // throw new Error("TEST: Logout failed");
       await signOut(auth);
       navigate("/login");
     } catch (error) {

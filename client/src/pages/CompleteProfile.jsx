@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import app from "../firebase";
-
+import { signOut } from "firebase/auth";
 import {
   Card,
   CardContent,
@@ -52,27 +52,63 @@ const CompleteProfile = () => {
     const fetchData = async () => {
       try {
         const currentUser = auth.currentUser;
+        // const currentUser = null;
 
         if (!currentUser) {
+          console.warn("No Firebase user found.");
           setError("Please login first.");
           return;
         }
+        // throw new Error("TEST: Firebase ID token failed");
+        let token;
 
-        const token = await currentUser.getIdToken();
+        try {
+          token = await currentUser.getIdToken();
+        } catch (error) {
+          console.error("Step 1 ERROR: Unable to get Firebase token:", error);
+
+          throw new Error(
+            "Unable to authenticate your account. Please try again.",
+          );
+        }
 
         if (isEditMode) {
           console.log("Edit mode: loading existing profile");
 
-          const profileResponse = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/users/me`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
+          let profileResponse;
 
-          const profileData = await profileResponse.json();
+          try {
+            profileResponse = await fetch(
+              `${import.meta.env.VITE_API_URL}/api/users/me`,
+              // `https://wrong-server-example-12345.com/api/users/me`,
+
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+          } catch (error) {
+            console.error("Step 2 ERROR: Profile API request failed:", error);
+
+            throw new Error(
+              "Unable to connect to the server while loading your profile.",
+            );
+          }
+
+          let profileData;
+
+          try {
+              // TEST: Force invalid JSON error
+              // throw new SyntaxError("TEST: Invalid profile JSON");
+            profileData = await profileResponse.json();
+          } catch (error) {
+            console.error("Step 3 ERROR: Invalid profile JSON:", error);
+
+            throw new Error(
+              "The server returned invalid profile data. Please try again later.",
+            );
+          }
 
           console.log("Existing profile:", profileData);
 
@@ -118,16 +154,40 @@ const CompleteProfile = () => {
           }));
         }
 
-        const regionResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+        let regionResponse;
 
-        const regionData = await regionResponse.json();
+        try {
+          // throw new SyntaxError("TEST: Invalid profile JSON");
+          regionResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/regions`,
+            // `https://wrong-server-example-12345.com/api/users/me`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+        } catch (error) {
+          console.error("Step 4 ERROR: Regions API request failed:", error);
+
+          throw new Error(
+            "Unable to connect to the server while loading regions.",
+          );
+        }
+
+        let regionData;
+
+        try {
+          // TEST: Force invalid regions JSON error
+          // throw new SyntaxError("TEST: Invalid regions JSON");
+          regionData = await regionResponse.json();
+        } catch (error) {
+          console.error("Step 5 ERROR: Invalid regions JSON:", error);
+
+          throw new Error(
+            "The server returned invalid region data. Please try again later.",
+          );
+        }
 
         if (!regionResponse.ok) {
           throw new Error(regionData.message || "Failed to fetch regions");
@@ -200,58 +260,100 @@ const CompleteProfile = () => {
         return;
       }
 
-      const token = await currentUser.getIdToken();
+      let token;
 
+      try {
+        // TEST: Force Firebase token failure
+        // throw new Error("TEST: Firebase token could not be obtained");
+
+        token = await currentUser.getIdToken();
+      } catch (error) {
+        console.error("Step 6 ERROR: Unable to get Firebase token:", error);
+
+        throw new Error(
+          "Unable to authenticate your account. Please try again.",
+        );
+      }
       let response;
 
-      if (isEditMode) {
-        console.log("Updating existing user");
+      try {
+        if (isEditMode) {
+          console.log("Updating existing user");
 
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: profile?.name || formData.name,
-            age: formData.age,
-            gender: formData.gender,
-            phone: formData.phone,
-            localLanguage: formData.localLanguage,
-            region: formData.region,
-            stateProvince: formData.stateProvince,
-            country: formData.country,
-            email: profile?.email || formData.email,
-            skills: formData.skills,
-          }),
-        });
-      } else {
-        console.log("Creating new user");
+          response = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/users/me`,
+            // `https://wrong-server-example-12345.com/api/users/me`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                name: googleName,
+                age: formData.age,
+                gender: formData.gender,
+                phone: formData.phone,
+                localLanguage: formData.localLanguage,
+                region: formData.region,
+                stateProvince: formData.stateProvince,
+                country: formData.country,
+                email: googleEmail,
+                skills: formData.skills,
+                firebaseUid: firebaseUid,
+              }),
+            },
+          );
+        } else {
+          console.log("Creating new user");
 
-        response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: googleName,
-            age: formData.age,
-            gender: formData.gender,
-            phone: formData.phone,
-            localLanguage: formData.localLanguage,
-            region: formData.region,
-            stateProvince: formData.stateProvince,
-            country: formData.country,
-            email: googleEmail,
-            skills: formData.skills,
-            firebaseUid: firebaseUid,
-          }),
-        });
+          response = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/users`,
+            // `https://wrong-server-example-12345.com/api/users`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                name: googleName,
+                age: formData.age,
+                gender: formData.gender,
+                phone: formData.phone,
+                localLanguage: formData.localLanguage,
+                region: formData.region,
+                stateProvince: formData.stateProvince,
+                country: formData.country,
+                email: googleEmail,
+                skills: formData.skills,
+                firebaseUid: firebaseUid,
+              }),
+            },
+          );
+        }
+      } catch (error) {
+        console.error("Step 7 ERROR: Profile API request failed:", error);
+
+        throw new Error(
+          "Unable to connect to the server. Please check your connection and try again.",
+        );
       }
 
-      const data = await response.json();
+      let data;
+
+      try {
+        // TEST: Force invalid JSON error
+        // throw new SyntaxError("TEST: Invalid profile JSON");
+
+        data = await response.json();
+      } catch (error) {
+        console.error("Step 8 ERROR: Invalid profile JSON:", error);
+
+        throw new Error(
+          "The server returned invalid profile data. Please try again later.",
+        );
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -274,6 +376,29 @@ const CompleteProfile = () => {
       setError(error.message);
     } finally {
       setSubmitting(false);
+    }
+  };
+  const handleExit = async () => {
+    if (isEditMode) {
+      navigate("/user-dashboard");
+      return;
+    }
+
+    const confirmExit = window.confirm(
+      "Exit profile setup?\n\nYour profile information has not been completed. Are you sure you want to exit?",
+    );
+
+    if (!confirmExit) {
+      return;
+    }
+
+    try {
+      // throw new Error("TEST: Edit failed");
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      console.error("Exit logout error:", error);
+      setError("Unable to logout. Please try again.");
     }
   };
 
@@ -344,9 +469,23 @@ const CompleteProfile = () => {
             </div>
           </div>
 
-          <div className="rounded-full border border-slate-700 bg-slate-800 px-4 py-1.5 text-xs font-semibold text-slate-300">
-            {isEditMode ? "Edit Profile" : "Profile Setup"}
-          </div>
+          <Button
+            variant="outline"
+            className="border-slate-600 bg-transparent font-semibold text-white hover:border-slate-400 hover:bg-white/10 hover:text-white"
+            onClick={async () => {
+              try {
+                // console.log("TEST: Logout button clicked");
+                // throw new Error("TEST: Logout failed");
+                await signOut(auth);
+                navigate("/");
+              } catch (error) {
+                console.error("Logout error:", error);
+                setError("Unable to logout. Please try again.");
+              }
+            }}
+          >
+            Logout
+          </Button>
         </div>
       </header>
 
@@ -370,6 +509,9 @@ const CompleteProfile = () => {
                     Please provide your details so ReConnect can connect you
                     with the appropriate community support.
                   </CardDescription>
+                  <Button type="button" variant="outline" onClick={handleExit}>
+                    {isEditMode ? "Cancel" : "Exit"}
+                  </Button>
                 </div>
               </div>
             </CardHeader>

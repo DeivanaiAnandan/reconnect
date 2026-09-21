@@ -33,17 +33,26 @@ const NGODashboard = () => {
 
         // Fetch logged-in NGO profile
         const ngoResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/ngos/me`,
+          `${import.meta.env.VITE_API_URL}/api/ngos/mee`,
           {
             headers,
           },
         );
 
-        const ngoData = await ngoResponse.json();
-
         if (!ngoResponse.ok) {
-          throw new Error(ngoData.message || "Failed to fetch NGO profile");
+          let errorMessage = `Request failed with status ${ngoResponse.status}`;
+
+          const contentType = ngoResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await ngoResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
+
+        const ngoData = await ngoResponse.json();
 
         setNgo(ngoData);
 
@@ -55,11 +64,20 @@ const NGODashboard = () => {
           },
         );
 
-        const usersData = await usersResponse.json();
-
         if (!usersResponse.ok) {
-          throw new Error(usersData.message || "Failed to fetch users");
+          let errorMessage = `Request failed with status ${usersResponse.status}`;
+
+          const contentType = usersResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await usersResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
+
+        const usersData = await usersResponse.json();
 
         setUsers(usersData);
 
@@ -71,13 +89,20 @@ const NGODashboard = () => {
           },
         );
 
-        const requestsData = await requestsResponse.json();
-
         if (!requestsResponse.ok) {
-          throw new Error(
-            requestsData.message || "Failed to fetch assistance requests",
-          );
+          let errorMessage = `Request failed with status ${requestsResponse.status}`;
+
+          const contentType = requestsResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await requestsResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
+
+        const requestsData = await requestsResponse.json();
 
         setAssistanceRequests(requestsData);
       } catch (error) {

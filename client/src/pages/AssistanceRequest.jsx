@@ -80,6 +80,7 @@ const AssistanceRequest = () => {
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/assistance-requests`,
+        // `https://wrong-server-example-12345.com/api/assistance-requests`,
         {
           method: "POST",
           headers: {
@@ -90,13 +91,22 @@ const AssistanceRequest = () => {
         },
       );
 
+      if (!response.ok) {
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
       const data = await response.json();
 
       console.log("Assistance request response:", data);
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to submit assistance request");
-      }
 
       setSubmitted(true);
     } catch (error) {
