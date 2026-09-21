@@ -141,11 +141,22 @@ const SuperAdminDashboard = () => {
           },
         );
 
+        if (!response.ok) {
+          let errorMessage = `Request failed with status ${response.status}`;
+
+          const contentType = response.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
+        }
+
         const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch regions");
-        }
+        setRegions(data);
 
         setRegions(data);
       } catch (error) {
@@ -191,23 +202,48 @@ const SuperAdminDashboard = () => {
             }),
           ]);
 
-        const usersData = await usersResponse.json();
-        const ngosData = await ngosResponse.json();
-        const requestsData = await requestsResponse.json();
-
         if (!usersResponse.ok) {
-          throw new Error(usersData.message || "Failed to fetch users");
+          let errorMessage = `Request failed with status ${usersResponse.status}`;
+
+          const contentType = usersResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await usersResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
 
         if (!ngosResponse.ok) {
-          throw new Error(ngosData.message || "Failed to fetch NGOs");
+          let errorMessage = `Request failed with status ${ngosResponse.status}`;
+
+          const contentType = ngosResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await ngosResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
 
         if (!requestsResponse.ok) {
-          throw new Error(
-            requestsData.message || "Failed to fetch assistance requests",
-          );
+          let errorMessage = `Request failed with status ${requestsResponse.status}`;
+
+          const contentType = requestsResponse.headers.get("content-type");
+
+          if (contentType?.includes("application/json")) {
+            const errorData = await requestsResponse.json();
+            errorMessage = errorData.message || errorMessage;
+          }
+
+          throw new Error(errorMessage);
         }
+
+        const usersData = await usersResponse.json();
+        const ngosData = await ngosResponse.json();
+        const requestsData = await requestsResponse.json();
 
         setUsers(usersData);
         setNgos(ngosData);
@@ -252,7 +288,7 @@ const SuperAdminDashboard = () => {
       const token = await currentUser.getIdToken();
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users`,
+        `${import.meta.env.VITE_API_URL}/api/userss`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -260,11 +296,20 @@ const SuperAdminDashboard = () => {
         },
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch users");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       setUsers(data);
     } catch (error) {
@@ -297,13 +342,22 @@ const SuperAdminDashboard = () => {
         },
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch NGOs");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        }
+
+        throw new Error(errorMessage);
       }
 
-      setNgos(data);
+      const data = await response.json();
+
+      setUsers(data);
     } catch (error) {
       console.error("Error fetching NGOs:", error);
       setError(error.message);
@@ -339,11 +393,20 @@ const SuperAdminDashboard = () => {
         },
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch assistance requests");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       setAssistanceRequests(data.requests);
     } catch (error) {
@@ -377,13 +440,21 @@ const SuperAdminDashboard = () => {
         },
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to update assistance request status",
-        );
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message || "Failed to update assistance request status";
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       console.log("Status updated successfully:", data);
 
@@ -420,6 +491,7 @@ const SuperAdminDashboard = () => {
   };
   const handleLogout = async () => {
     try {
+      // throw new Error("TEST: Logout failed");
       await signOut(auth);
       window.location.href = "/login";
     } catch (error) {
@@ -470,11 +542,20 @@ const SuperAdminDashboard = () => {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create NGO");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || "Failed to create NGO";
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       console.log("Created NGO:", data);
 
@@ -519,11 +600,20 @@ const SuperAdminDashboard = () => {
         },
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update NGO status");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || "Failed to update NGO status";
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       console.log(data.message);
 
@@ -553,11 +643,20 @@ const SuperAdminDashboard = () => {
         },
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to delete NGO");
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || "Failed to delete NGO";
+        }
+
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       setToast("NGO deleted successfully.");
 
