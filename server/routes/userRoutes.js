@@ -10,7 +10,7 @@ import {
   deactivateMyAccount,
 } from "../controllers/userController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, protectSuperAdmin } from "../middleware/authMiddleware.js";
 // import { authorizeRoles } from "../middleware/roleMiddleware.js";
 const router = express.Router();
 
@@ -27,6 +27,6 @@ router.patch("/me/deactivate", protect, deactivateMyAccount);
 router.get("/:id", getUser);
 router.post("/", createUser);
 router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+router.delete("/:id", protect, protectSuperAdmin, deleteUser);
 
 export default router;

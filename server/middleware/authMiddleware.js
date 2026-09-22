@@ -18,7 +18,7 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 
   const decodedToken = await admin.auth().verifyIdToken(token);
-console.log("decodedtoken", decodedToken)
+  console.log("decodedtoken", decodedToken);
   req.firebaseUser = decodedToken;
 
   const user = await User.findOne({
@@ -38,5 +38,12 @@ console.log("decodedtoken", decodedToken)
 
   next();
 });
+const protectSuperAdmin = asyncHandler(async (req, res, next) => {
+  if (req.user.role !== "superadmin") {
+    res.status(403);
+    throw new Error("Not authorized as Super Admin");
+  }
 
-export { protect };
+  next();
+});
+export { protect, protectSuperAdmin };

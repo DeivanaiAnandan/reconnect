@@ -519,7 +519,6 @@ const UserDashboard = () => {
                   <p className="font-semibold text-slate-800">
                     Need additional assistance?
                   </p>
-
                   <p className="mt-1 text-sm text-slate-500">
                     You can submit another assistance request whenever you need
                     support.
@@ -529,7 +528,13 @@ const UserDashboard = () => {
                     onClick={() => navigate("/assistance-request")}
                     className="mt-4 bg-slate-900 font-semibold text-white shadow-sm hover:bg-slate-800"
                   >
-                    + Submit Assistance Request
+                    <span className="max-[359px]:hidden">
+                      + Submit Assistance Request
+                    </span>
+
+                    <span className="hidden max-[359px]:inline">
+                      + Submit Request
+                    </span>
                   </Button>
                 </div>
               </div>

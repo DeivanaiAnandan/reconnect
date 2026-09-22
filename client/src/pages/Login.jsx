@@ -184,9 +184,9 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="hidden rounded-full border border-slate-700 bg-slate-800 px-4 py-1.5 text-xs font-semibold text-slate-300 sm:block">
+          {/* <div className="hidden rounded-full border border-slate-700 bg-slate-800 px-4 py-1.5 text-xs font-semibold text-slate-300 sm:block">
             Secure Sign In
-          </div>
+          </div> */}
         </div>
       </header>
 

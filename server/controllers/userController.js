@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import Region from "../models/regionModel.js";
+import admin from "../config/firebaseAdmin.js";
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -161,6 +162,10 @@ const deleteUser = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
+  // Delete Firebase Authentication account
+  await admin.auth().deleteUser(user.firebaseUid);
+
+  // Delete user from MongoDB
   await user.deleteOne();
 
   res.status(200).json({

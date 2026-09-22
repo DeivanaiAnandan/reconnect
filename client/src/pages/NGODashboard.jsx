@@ -33,7 +33,7 @@ const NGODashboard = () => {
 
         // Fetch logged-in NGO profile
         const ngoResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/ngos/mee`,
+          `${import.meta.env.VITE_API_URL}/api/ngos/me`,
           {
             headers,
           },
@@ -225,7 +225,7 @@ const NGODashboard = () => {
                 NGO Portal
               </div>
 
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-xl font-bold tracking-tight sm:text-3xl text-slate-900">
                 {ngo?.name || "Community Support"}
               </h1>
 

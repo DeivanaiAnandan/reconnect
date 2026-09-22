@@ -8,15 +8,17 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       {/* Navigation */}
+
       <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-4">
+          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-lg font-bold text-white shadow-sm">
               R
             </div>
 
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
                 ReConnect
               </h1>
 
@@ -25,13 +27,16 @@ const Home = () => {
               </p>
             </div>
           </div>
+
           {/* Disaster Management Helpline */}
           <a
             href="tel:1078"
-            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+            className="order-3 w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-center text-sm font-semibold text-blue-700 transition hover:bg-blue-100 sm:order-none sm:w-auto"
           >
             Disaster Management Helpline: 1078
           </a>
+
+          {/* Sign In */}
           <Button
             onClick={() => navigate("/login")}
             className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700"
@@ -52,7 +57,7 @@ const Home = () => {
                 Community Support Platform
               </div>
 
-              <h2 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              <h2 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
                 Reconnecting people with the support they need.
               </h2>
 
@@ -150,7 +155,6 @@ const Home = () => {
           </div>
         </section>
       </main>
-
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6">
         <p className="text-center text-sm text-slate-500">

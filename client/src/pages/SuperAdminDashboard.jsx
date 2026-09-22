@@ -46,6 +46,15 @@ const SuperAdminDashboard = () => {
   const [deleteNGO, setDeleteNGO] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [userRegionFilter, setUserRegionFilter] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState("");
+
+  const [ngoRegionFilter, setNgoRegionFilter] = useState("");
+  const [ngoStatusFilter, setNgoStatusFilter] = useState("");
+
+  const [requestRegionFilter, setRequestRegionFilter] = useState("");
+  const [requestStatusFilter, setRequestStatusFilter] = useState("");
+  const [deleteUser, setDeleteUser] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -155,9 +164,7 @@ const SuperAdminDashboard = () => {
         }
 
         const data = await response.json();
-
-        setRegions(data);
-
+        console.log("Regions data:", data);
         setRegions(data);
       } catch (error) {
         console.error("Error fetching regions:", error);
@@ -288,7 +295,7 @@ const SuperAdminDashboard = () => {
       const token = await currentUser.getIdToken();
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/userss`,
+        `${import.meta.env.VITE_API_URL}/api/users`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -357,7 +364,7 @@ const SuperAdminDashboard = () => {
 
       const data = await response.json();
 
-      setUsers(data);
+      setNgos(data);
     } catch (error) {
       console.error("Error fetching NGOs:", error);
       setError(error.message);
@@ -408,6 +415,7 @@ const SuperAdminDashboard = () => {
 
       const data = await response.json();
 
+      console.log("Assistance requests data:", data.requests);
       setAssistanceRequests(data.requests);
     } catch (error) {
       console.error("Error fetching assistance requests:", error);
@@ -669,6 +677,89 @@ const SuperAdminDashboard = () => {
       console.error("NGO delete error:", error);
     }
   };
+  const handleDeleteUser = async () => {
+    if (!deleteUser) return;
+
+    try {
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error("User is not authenticated");
+      }
+
+      const token = await currentUser.getIdToken();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/${deleteUser._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        let errorMessage = `Request failed with status ${response.status}`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || "Failed to delete user";
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      console.log("User deleted:", data);
+
+      // Remove deleted user from the current list
+      setUsers((prevUsers) =>
+        prevUsers.filter((user) => user._id !== deleteUser._id),
+      );
+
+      // Close confirmation modal
+      setDeleteUser(null);
+
+      // Success toast
+      setToast("User deleted successfully.");
+
+      setTimeout(() => {
+        setToast("");
+      }, 3000);
+    } catch (error) {
+      console.error("User delete error:", error);
+    }
+  };
+  const filteredUsers = users.filter((user) => {
+    const matchesRegion = !userRegionFilter || user.region === userRegionFilter;
+
+    const matchesStatus =
+      !userStatusFilter || user.accountStatus === userStatusFilter;
+
+    return matchesRegion && matchesStatus;
+  });
+  const filteredNGOs = ngos.filter((ngo) => {
+    const matchesRegion =
+      !ngoRegionFilter || ngo.regionId?.region === ngoRegionFilter;
+
+    const matchesStatus =
+      !ngoStatusFilter || ngo.accountStatus === ngoStatusFilter;
+
+    return matchesRegion && matchesStatus;
+  });
+  const filteredRequests = assistanceRequests.filter((request) => {
+    const matchesRegion =
+      !requestRegionFilter || request.regionId?.region === requestRegionFilter;
+
+    const matchesStatus =
+      !requestStatusFilter || request.status === requestStatusFilter;
+
+    return matchesRegion && matchesStatus;
+  });
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="flex min-h-screen">
@@ -1357,7 +1448,7 @@ const SuperAdminDashboard = () => {
               </div>
 
               {/* Assistance Required Chart */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">
                     Request Analytics
@@ -1371,7 +1462,6 @@ const SuperAdminDashboard = () => {
                     Requests grouped by assistance type.
                   </p>
                 </div>
-
                 <div className="mt-3 h-44">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -1409,7 +1499,7 @@ const SuperAdminDashboard = () => {
               </div>
 
               {/* Request Region Chart */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">
                     Request Analytics
@@ -1423,7 +1513,6 @@ const SuperAdminDashboard = () => {
                     Requests received from each region.
                   </p>
                 </div>
-
                 <div className="mt-3 h-44">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -1702,7 +1791,7 @@ const SuperAdminDashboard = () => {
                 <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-xl">
                   {/* Section Header */}
                   <div className="border-b border-slate-200 bg-slate-50 px-8 py-6">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-2xl">
                           👥
@@ -1721,12 +1810,58 @@ const SuperAdminDashboard = () => {
                       </div>
 
                       {/* User Count */}
-                      <div className="rounded-xl bg-blue-600 px-4 py-2 text-center text-white shadow-sm">
-                        <p className="text-xs font-medium uppercase tracking-wide text-blue-100">
-                          Total Users
-                        </p>
+                      {/* User Filters + Count */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Region Filter */}
+                        <select
+                          value={userRegionFilter}
+                          onChange={(e) => setUserRegionFilter(e.target.value)}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="">All Regions</option>
 
-                        <p className="text-xl font-bold">{users.length}</p>
+                          {[
+                            ...new Set(
+                              users.map((user) => user.region).filter(Boolean),
+                            ),
+                          ].map((region) => (
+                            <option key={region} value={region}>
+                              {region}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Status Filter */}
+                        <select
+                          value={userStatusFilter}
+                          onChange={(e) => setUserStatusFilter(e.target.value)}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="">All Statuses</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+
+                        {/* Reset */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserRegionFilter("");
+                            setUserStatusFilter("");
+                          }}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                        >
+                          Reset
+                        </button>
+
+                        {/* User Count */}
+                        <div className="rounded-xl bg-blue-600 px-4 py-2 text-center text-white shadow-sm">
+                          <p className="text-xs font-medium uppercase tracking-wide text-blue-100">
+                            Total Users
+                          </p>
+
+                          <p className="text-xl font-bold">{users.length}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1783,59 +1918,83 @@ const SuperAdminDashboard = () => {
                               <th className="whitespace-nowrap px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
                                 Status
                               </th>
+                              <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                Actions
+                              </th>
                             </tr>
                           </thead>
 
                           <tbody className="divide-y divide-slate-200 bg-white">
-                            {users.map((user) => (
-                              <tr
-                                key={user._id}
-                                className="transition hover:bg-blue-50/50"
-                              >
-                                <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-800">
-                                  {user.name}
-                                </td>
-
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {user.email}
-                                </td>
-
-                                <td className="px-5 py-4 text-sm text-slate-600">
-                                  {user.age}
-                                </td>
-
-                                <td className="px-5 py-4 text-sm text-slate-600">
-                                  {user.gender}
-                                </td>
-
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {user.phone}
-                                </td>
-
-                                <td className="px-5 py-4 text-sm text-slate-600">
-                                  <div className="font-medium text-slate-700">
-                                    {user.region}
-                                  </div>
-
-                                  <div className="text-xs text-slate-400">
-                                    {user.stateProvince}
-                                  </div>
-                                </td>
-
-                                {/* Status Badge */}
-                                <td className="px-5 py-4">
-                                  <span
-                                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                                      user.accountStatus === "active"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                    }`}
-                                  >
-                                    {user.accountStatus}
-                                  </span>
+                            {filteredUsers.length === 0 ? (
+                              <tr>
+                                <td
+                                  colSpan="8"
+                                  className="px-6 py-10 text-center text-sm text-slate-500"
+                                >
+                                  No users found.
                                 </td>
                               </tr>
-                            ))}
+                            ) : (
+                              filteredUsers.map((user) => (
+                                <tr
+                                  key={user._id}
+                                  className="transition hover:bg-blue-50/50"
+                                >
+                                  <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-800">
+                                    {user.name}
+                                  </td>
+
+                                  <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                                    {user.email}
+                                  </td>
+
+                                  <td className="px-5 py-4 text-sm text-slate-600">
+                                    {user.age}
+                                  </td>
+
+                                  <td className="px-5 py-4 text-sm text-slate-600">
+                                    {user.gender}
+                                  </td>
+
+                                  <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                                    {user.phone}
+                                  </td>
+
+                                  <td className="px-5 py-4 text-sm text-slate-600">
+                                    <div className="font-medium text-slate-700">
+                                      {user.region}
+                                    </div>
+
+                                    <div className="text-xs text-slate-400">
+                                      {user.stateProvince}
+                                    </div>
+                                  </td>
+
+                                  {/* Status Badge */}
+                                  <td className="px-5 py-4">
+                                    <span
+                                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                                        user.accountStatus === "active"
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-red-100 text-red-700"
+                                      }`}
+                                    >
+                                      {user.accountStatus}
+                                    </span>
+                                  </td>
+                                  {/* Actions */}
+                                  <td className="px-5 py-4">
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteUser(user)}
+                                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                                    >
+                                      Delete
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -1870,7 +2029,7 @@ const SuperAdminDashboard = () => {
                 <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-xl">
                   {/* Section Header */}
                   <div className="border-b border-slate-200 bg-slate-50 px-8 py-6">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-2xl">
                           🏢
@@ -1889,12 +2048,60 @@ const SuperAdminDashboard = () => {
                       </div>
 
                       {/* NGO Count */}
-                      <div className="rounded-xl bg-blue-600 px-4 py-2 text-center text-white shadow-sm">
-                        <p className="text-xs font-medium uppercase tracking-wide text-blue-100">
-                          Total NGOs
-                        </p>
+                      {/* NGO Filters + Count */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Region Filter */}
+                        <select
+                          value={ngoRegionFilter}
+                          onChange={(e) => setNgoRegionFilter(e.target.value)}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="">All Regions</option>
 
-                        <p className="text-xl font-bold">{ngos.length}</p>
+                          {[
+                            ...new Set(
+                              ngos
+                                .map((ngo) => ngo.regionId?.region)
+                                .filter(Boolean),
+                            ),
+                          ].map((region) => (
+                            <option key={region} value={region}>
+                              {region}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Status Filter */}
+                        <select
+                          value={ngoStatusFilter}
+                          onChange={(e) => setNgoStatusFilter(e.target.value)}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="">All Statuses</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+
+                        {/* Reset */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNgoRegionFilter("");
+                            setNgoStatusFilter("");
+                          }}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                        >
+                          Reset
+                        </button>
+
+                        {/* Total NGOs */}
+                        <div className="rounded-xl bg-blue-600 px-4 py-2 text-center text-white shadow-sm">
+                          <p className="text-xs font-medium uppercase tracking-wide text-blue-100">
+                            Total NGOs
+                          </p>
+
+                          <p className="text-xl font-bold">{ngos.length}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1956,91 +2163,97 @@ const SuperAdminDashboard = () => {
                           </thead>
 
                           <tbody className="divide-y divide-slate-200 bg-white">
-                            {ngos.map((ngo) => (
-                              <tr
-                                key={ngo._id}
-                                className="transition hover:bg-blue-50/50"
-                              >
-                                {/* NGO Name */}
-                                <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-800">
-                                  {ngo.name}
-                                </td>
-
-                                {/* Email */}
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {ngo.email}
-                                </td>
-
-                                {/* Phone */}
-                                {/* <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {ngo.phone}
-                                </td> */}
-
-                                {/* Local Language */}
-                                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                                  {ngo.localLanguage}
-                                </td>
-
-                                {/* Region */}
-                                <td className="px-5 py-4">
-                                  <div className="font-medium text-slate-700">
-                                    {ngo.regionId?.region || "N/A"}
-                                  </div>
-
-                                  <div className="text-xs text-slate-400">
-                                    {ngo.regionId?.stateProvince || ""}
-                                  </div>
-                                </td>
-
-                                {/* Status */}
-                                <td className="px-5 py-4">
-                                  <span
-                                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                                      ngo.accountStatus === "active"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                    }`}
-                                  >
-                                    {ngo.accountStatus}
-                                  </span>
-                                </td>
-
-                                {/* Actions */}
-                                <td className="px-5 py-4">
-                                  <div className="flex items-center gap-2">
-                                    {ngo.accountStatus === "active" ? (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleNGOStatusChange(ngo)
-                                        }
-                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
-                                      >
-                                        Deactivate
-                                      </button>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleNGOStatusChange(ngo)
-                                        }
-                                        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
-                                      >
-                                        Activate
-                                      </button>
-                                    )}
-
-                                    <button
-                                      type="button"
-                                      onClick={() => setDeleteNGO(ngo)}
-                                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
+                            {filteredNGOs.length === 0 ? (
+                              <tr>
+                                <td
+                                  colSpan="6"
+                                  className="px-6 py-10 text-center text-sm text-slate-500"
+                                >
+                                  No NGOs found.
                                 </td>
                               </tr>
-                            ))}
+                            ) : (
+                              filteredNGOs.map((ngo) => (
+                                <tr
+                                  key={ngo._id}
+                                  className="transition hover:bg-blue-50/50"
+                                >
+                                  {/* NGO Name */}
+                                  <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-800">
+                                    {ngo.name}
+                                  </td>
+
+                                  {/* Email */}
+                                  <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                                    {ngo.email}
+                                  </td>
+
+                                  {/* Local Language */}
+                                  <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                                    {ngo.localLanguage}
+                                  </td>
+
+                                  {/* Region */}
+                                  <td className="px-5 py-4">
+                                    <div className="font-medium text-slate-700">
+                                      {ngo.regionId?.region || "N/A"}
+                                    </div>
+
+                                    <div className="text-xs text-slate-400">
+                                      {ngo.regionId?.stateProvince || ""}
+                                    </div>
+                                  </td>
+
+                                  {/* Status */}
+                                  <td className="px-5 py-4">
+                                    <span
+                                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                                        ngo.accountStatus === "active"
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-red-100 text-red-700"
+                                      }`}
+                                    >
+                                      {ngo.accountStatus}
+                                    </span>
+                                  </td>
+
+                                  {/* Actions */}
+                                  <td className="px-5 py-4">
+                                    <div className="flex items-center gap-2">
+                                      {ngo.accountStatus === "active" ? (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleNGOStatusChange(ngo)
+                                          }
+                                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                                        >
+                                          Deactivate
+                                        </button>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleNGOStatusChange(ngo)
+                                          }
+                                          className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                                        >
+                                          Activate
+                                        </button>
+                                      )}
+
+                                      <button
+                                        type="button"
+                                        onClick={() => setDeleteNGO(ngo)}
+                                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -2076,7 +2289,7 @@ const SuperAdminDashboard = () => {
                 <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-xl">
                   {/* Section Header */}
                   <div className="border-b border-slate-200 bg-slate-50 px-8 py-6">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-2xl">
                           📋
@@ -2109,6 +2322,51 @@ const SuperAdminDashboard = () => {
 
                   {/* Request Content */}
                   <div className="p-8">
+                    {/* Filters */}
+                    <div className="mb-6 flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-end">
+                      {/* Region Filter */}
+                      <div className="flex-1">
+                        <label className="mb-2 block text-sm font-semibold text-slate-600">
+                          Filter by Region
+                        </label>
+
+                        <select
+                          value={requestRegionFilter}
+                          onChange={(e) =>
+                            setRequestRegionFilter(e.target.value)
+                          }
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="">All Regions</option>
+
+                          {regions.map((region) => (
+                            <option key={region._id} value={region.region}>
+                              {region.region}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div className="flex-1">
+                        <label className="mb-2 block text-sm font-semibold text-slate-600">
+                          Filter by Status
+                        </label>
+
+                        <select
+                          value={requestStatusFilter}
+                          onChange={(e) =>
+                            setRequestStatusFilter(e.target.value)
+                          }
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="">All Statuses</option>
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Resolved">Resolved</option>
+                        </select>
+                      </div>
+                    </div>
                     {loadingRequests ? (
                       <div className="flex items-center justify-center py-12">
                         <p className="text-sm font-medium text-slate-500">
@@ -2130,133 +2388,146 @@ const SuperAdminDashboard = () => {
                       </div>
                     ) : (
                       <div className="space-y-5">
-                        {assistanceRequests.map((request) => (
-                          <div
-                            key={request._id}
-                            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md"
-                          >
-                            {/* Top Row */}
-                            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                              {/* User */}
-                              <div className="flex items-start gap-4">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
-                                  {request.userId?.name
-                                    ? request.userId.name
-                                        .charAt(0)
-                                        .toUpperCase()
-                                    : "?"}
+                        {filteredRequests.length === 0 ? (
+                          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+                            {requestRegionFilter && requestStatusFilter
+                              ? `No assistance requests found for ${requestRegionFilter} with ${requestStatusFilter} status.`
+                              : requestRegionFilter
+                                ? `No assistance requests found for ${requestRegionFilter}.`
+                                : requestStatusFilter
+                                  ? `No ${requestStatusFilter} assistance requests found.`
+                                  : "No assistance requests found."}
+                          </div>
+                        ) : (
+                          filteredRequests.map((request) => (
+                            <div
+                              key={request._id}
+                              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+                            >
+                              {/* Top Row */}
+                              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                {/* User */}
+                                <div className="flex items-start gap-4">
+                                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
+                                    {request.userId?.name
+                                      ? request.userId.name
+                                          .charAt(0)
+                                          .toUpperCase()
+                                      : "?"}
+                                  </div>
+
+                                  <div>
+                                    <h3 className="text-lg font-bold text-slate-800">
+                                      {request.userId?.name || "Unknown User"}
+                                    </h3>
+
+                                    <p className="mt-1 text-sm text-slate-500">
+                                      {request.userId?.phone ||
+                                        "No phone number"}
+                                    </p>
+                                  </div>
                                 </div>
 
+                                {/* Status */}
+                                {/* Status */}
+                                <div className="flex flex-col items-start gap-2">
+                                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Status
+                                  </label>
+
+                                  <select
+                                    value={request.status}
+                                    onChange={(e) =>
+                                      handleStatusChange(
+                                        request._id,
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={`rounded-lg border px-3 py-2 text-sm font-semibold outline-none transition focus:ring-2 focus:ring-blue-100 ${
+                                      request.status === "Resolved"
+                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                        : request.status === "In Progress"
+                                          ? "border-blue-200 bg-blue-50 text-blue-700"
+                                          : "border-amber-200 bg-amber-50 text-amber-700"
+                                    }`}
+                                  >
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">
+                                      In Progress
+                                    </option>
+                                    <option value="Resolved">Resolved</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Divider */}
+                              <div className="my-5 border-t border-slate-100" />
+
+                              {/* Request Information */}
+                              <div className="grid gap-6 md:grid-cols-2">
+                                {/* Assistance Type */}
                                 <div>
-                                  <h3 className="text-lg font-bold text-slate-800">
-                                    {request.userId?.name || "Unknown User"}
-                                  </h3>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Assistance Required
+                                  </p>
+
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {request.assistanceType?.map((type) => (
+                                      <span
+                                        key={type}
+                                        className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700"
+                                      >
+                                        {type}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Region */}
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Region
+                                  </p>
+
+                                  <p className="mt-2 font-medium text-slate-700">
+                                    {request.regionId?.region || "N/A"}
+                                  </p>
 
                                   <p className="mt-1 text-sm text-slate-500">
-                                    {request.userId?.phone || "No phone number"}
+                                    {request.regionId?.stateProvince},{" "}
+                                    {request.regionId?.country}
+                                  </p>
+                                </div>
+
+                                {/* Submitted Date */}
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Submitted
+                                  </p>
+
+                                  <p className="mt-2 font-medium text-slate-700">
+                                    {new Date(
+                                      request.createdAt,
+                                    ).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
 
-                              {/* Status */}
-                              {/* Status */}
-                              <div className="flex flex-col items-start gap-2">
-                                <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                  Status
-                                </label>
+                              {/* Description */}
+                              {request.description && (
+                                <div className="mt-6 rounded-xl bg-slate-50 p-4">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                    Description
+                                  </p>
 
-                                <select
-                                  value={request.status}
-                                  onChange={(e) =>
-                                    handleStatusChange(
-                                      request._id,
-                                      e.target.value,
-                                    )
-                                  }
-                                  className={`rounded-lg border px-3 py-2 text-sm font-semibold outline-none transition focus:ring-2 focus:ring-blue-100 ${
-                                    request.status === "Resolved"
-                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                      : request.status === "In Progress"
-                                        ? "border-blue-200 bg-blue-50 text-blue-700"
-                                        : "border-amber-200 bg-amber-50 text-amber-700"
-                                  }`}
-                                >
-                                  <option value="Pending">Pending</option>
-                                  <option value="In Progress">
-                                    In Progress
-                                  </option>
-                                  <option value="Resolved">Resolved</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="my-5 border-t border-slate-100" />
-
-                            {/* Request Information */}
-                            <div className="grid gap-6 md:grid-cols-2">
-                              {/* Assistance Type */}
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                  Assistance Required
-                                </p>
-
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {request.assistanceType?.map((type) => (
-                                    <span
-                                      key={type}
-                                      className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700"
-                                    >
-                                      {type}
-                                    </span>
-                                  ))}
+                                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                                    {request.description}
+                                  </p>
                                 </div>
-                              </div>
-
-                              {/* Region */}
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                  Region
-                                </p>
-
-                                <p className="mt-2 font-medium text-slate-700">
-                                  {request.regionId?.region || "N/A"}
-                                </p>
-
-                                <p className="mt-1 text-sm text-slate-500">
-                                  {request.regionId?.stateProvince},{" "}
-                                  {request.regionId?.country}
-                                </p>
-                              </div>
-
-                              {/* Submitted Date */}
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                  Submitted
-                                </p>
-
-                                <p className="mt-2 font-medium text-slate-700">
-                                  {new Date(
-                                    request.createdAt,
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
+                              )}
                             </div>
-
-                            {/* Description */}
-                            {request.description && (
-                              <div className="mt-6 rounded-xl bg-slate-50 p-4">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                  Description
-                                </p>
-
-                                <p className="mt-2 text-sm leading-6 text-slate-700">
-                                  {request.description}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                          ))
+                        )}
                       </div>
                     )}
 
@@ -2320,6 +2591,43 @@ const SuperAdminDashboard = () => {
                   await handleDeleteNGO(deleteNGO);
                   setDeleteNGO(null);
                 }}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-slate-800">Delete User?</h2>
+
+            <p className="mt-3 text-sm text-slate-600">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-slate-800">
+                {deleteUser.name}
+              </span>
+              ?
+            </p>
+
+            <p className="mt-2 text-sm font-medium text-red-600">
+              This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteUser(null)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteUser}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
               >
                 Delete
